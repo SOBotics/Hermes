@@ -1,3 +1,7 @@
+"""
+Here are the teams for bots and Room Owners defined
+"""
+
 teams = [
     {
         "aliases": [
@@ -43,10 +47,6 @@ teams = [
             "ROs"
         ],
         "members": [
-            4733879, #Filnor (I'm not an RO, but added myself as placeholder)
-            """
-            I have excluded all the room owners of SOBotics until I figure out how to ping 10+ users (the ping limit of a single message) and pinging 20 users is considered to be OK.
-            
             5292302, #Petter Friberg
             4687348, #FelixSFD
             6375113, #Bugs
@@ -67,7 +67,6 @@ teams = [
             4137985, #Cath
             1816093, #Drew
             1743880, #Tunaki
-            """
         ]
     }
 ]

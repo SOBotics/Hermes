@@ -106,6 +106,9 @@ def on_message(message, client):
     if message.content.startswith("🚂"):
         utils.log_command("train")
         utils.post_message("🚃")
+    elif message.content.lower().startswith("@bots alive"):
+        utils.log_command("@bots alive")
+        utils.post_message("You doubt me?")
 
     #Check if alias is valid
     if not utils.alias_valid(words[0]):
@@ -135,7 +138,7 @@ def on_message(message, client):
                 utils.reply_to(message, "You are not privileged. Ping @Team/SoundFlowDevs if you believe that's an error.")
         elif command in ["a", "alive"]:
             utils.log_command("alive")
-            utils.reply_to(message, f"You doubt me?")
+            utils.reply_to(message, "You doubt me?")
         elif command in ["v", "version"]:
             utils.log_command("version")
             utils.reply_to(message, f"Current version is {utils.config['botVersion']}")
