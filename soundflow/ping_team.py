@@ -22,8 +22,8 @@ def _get_pings(team, client):
 
     for user_id in team.members:
         if ping_list == "":
-            ping_list = f"@{_get_pingeable_name(user_id, client)}"
-        ping_list = f"{ping_list}, @{_get_pingeable_name(user_id, client)}"
+            ping_list = f"%{_get_pingeable_name(user_id, client)}"
+        ping_list = f"{ping_list}, %{_get_pingeable_name(user_id, client)}"
 
     return ping_list
 

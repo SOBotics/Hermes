@@ -186,7 +186,8 @@ def on_message(message, client):
                                "    SoundFlowDevs     - The developers of SoundFlow\n" + \
                                "    CheckYerFlagsDevs - The developers of CheckYerFlags\n" + \
                                "    ThunderDevs       - The developers of Thunder\n" + \
-                               "    FireAlarmDevs     - The developers of FireAlarm\n", False, False)
+                               "    FireAlarmDevs     - The developers of FireAlarm\n" + \
+                               "    RoomOwners        - The room owners of SOBotics\n", False, False)
         elif full_command.lower() in ["code", "github", "source"]:
             utils.log_command("code")
             utils.reply_to(message, "My code is on GitHub [here](https://github.com/SOBotics/SoundFlow).")
