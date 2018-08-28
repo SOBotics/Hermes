@@ -15,7 +15,7 @@ teams = [
     {
         "aliases": [
             "CheckYerFlags",
-            "CheckYerFlagsDevs",
+            "CheckYerFlagsDevs"
         ],
         "members": [
             4733879 #Filnor
@@ -24,7 +24,7 @@ teams = [
     {
         "aliases": [
             "Thunder",
-            "ThunderDevs",
+            "ThunderDevs"
         ],
         "members": [
             4688119 #Ashish Ahuja
@@ -33,7 +33,7 @@ teams = [
     {
         "aliases": [
             "FireAlarm",
-            "FireAlarmDevs",
+            "FireAlarmDevs"
         ],
         "members": [
             4688119, #Ashish Ahuja
@@ -42,7 +42,7 @@ teams = [
     },
     {
         "aliases": [
-            "RoomOwners"
+            "RoomOwners",
             "RO",
             "ROs"
         ],
@@ -67,6 +67,17 @@ teams = [
             4137985, #Cath
             1816093, #Drew
             1743880, #Tunaki
+        ]
+    },
+    {
+        "aliases": [
+            "Admins"
+        ],
+        "members": [
+            5292302, #Petter Friberg
+            4687348, #FelixSFD
+            4099593, #Bhargav Rao
+            2246344, #Sam
         ]
     }
 ]

@@ -50,8 +50,7 @@ class utils:
         """
         Check if a user is allowed to use privileged commands (usally restricted to bot owners, room owners and moderators)
         """
-        #priviledged_users = [4733879]
-        priviledged_users = []
+        priviledged_users = [4733879]
         for owner in self.room_owners:
             priviledged_users.append(owner.id)
 

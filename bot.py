@@ -5,12 +5,10 @@ import traceback
 
 from soundflow.logger import main_logger
 from soundflow.utils import utils
-from markdownify import markdownify as md
 from chatoverflow.chatexchange.client import Client
 from chatoverflow.chatexchange.events import MessagePosted, MessageEdited
 
 import soundflow.redunda as redunda
-import soundflow.se_api as stackexchange_api
 import soundflow.ping_team as ping_team
 
 #Import config file with custom error message
@@ -96,11 +94,6 @@ def on_message(message, client):
     #Get message as full string and as single words
     message_val = message.content
     words = message.content.split()
-    bot_messsages =[]
-
-    #If the bot account posted a message, store it's id
-    if message.user.id == 9220325:
-        bot_messsages.append(message)
 
     #Check for non-alias-command calls
     if message.content.startswith("🚂"):
@@ -108,10 +101,15 @@ def on_message(message, client):
         utils.post_message("🚃")
     elif message.content.lower().startswith("@bots alive"):
         utils.log_command("@bots alive")
-        utils.post_message("You doubt me?")
+        utils.post_message("All circuits operational.")
 
     #Check if alias is valid
     if not utils.alias_valid(words[0]):
+        return
+
+    #Check if command is not set
+    if len(words) <= 1:
+        utils.reply_to(message, "You may want to pass a command.")
         return
 
     #Store command in it's own variable
@@ -120,6 +118,13 @@ def on_message(message, client):
 
     #Here are the commands defined
     try:
+        if command in ["del", "delete", "poof"]:
+            msg = client.get_message(message.parent_message_id)
+            if msg is not None:
+                if utils.is_privileged(message):
+                    msg.delete()
+                else:
+                    utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
         if words[0].startswith("@Team/"):
             if utils.is_privileged(message):
                 utils.log_command("team ping")
@@ -138,7 +143,7 @@ def on_message(message, client):
                 utils.reply_to(message, "You are not privileged. Ping @Team/SoundFlowDevs if you believe that's an error.")
         elif command in ["a", "alive"]:
             utils.log_command("alive")
-            utils.reply_to(message, "You doubt me?")
+            utils.reply_to(message, "All circuits operational.")
         elif command in ["v", "version"]:
             utils.log_command("version")
             utils.reply_to(message, f"Current version is {utils.config['botVersion']}")
@@ -158,8 +163,8 @@ def on_message(message, client):
             else:
                 utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
         elif command in ["reboot"]:
-            utils.log_command("kill")
-            main_logger.warning(f"Termination or stop requested by {message.user.name}")
+            utils.log_command("reboot")
+            main_logger.warning(f"Restart requested by {message.user.name}")
 
             if utils.is_privileged(message):
                 try:
@@ -174,9 +179,11 @@ def on_message(message, client):
             utils.log_command("command list")
             utils.post_message("    ### SoundFlow commands ###\n" + \
                                "    amiprivileged                - Checks if you're allowed to run privileged commands\n" + \
-                               "    alive, a                     - Returns with the location and the running version of the bot, if it's running. No response likely means the bot is dead/not in this room.\n" + \
+                               "    alive, a                     - Replies with a message if the bot is running.\n" + \
                                "    version, v                   - Returns current version\n" + \
-                               "    reboot                       - Reboots a running instance. Requires privileges."
+                               "    location, loc                - Returns the location of the bot\n" + \
+                               "    delete, del, poof            - Deletes a message. Requires privileges.\n" + \
+                               "    reboot                       - Reboots a running instance. Requires privileges.\n" + \
                                "    kill, stop                   - Terminates the bot instance. Requires privileges.\n" + \
                                "    listteams, list teams        - Lists the pingeable teams\n" + \
                                "    commands, help               - This command. Lists all available commands.\n", False, False)
@@ -187,7 +194,8 @@ def on_message(message, client):
                                "    CheckYerFlagsDevs - The developers of CheckYerFlags\n" + \
                                "    ThunderDevs       - The developers of Thunder\n" + \
                                "    FireAlarmDevs     - The developers of FireAlarm\n" + \
-                               "    RoomOwners        - The room owners of SOBotics\n", False, False)
+                               "    RoomOwners        - The room owners of SOBotics\n" + \
+                               "    Admins            - The admins of SOBotics, which have admin rights on GitHub etc.\n", False, False)
         elif full_command.lower() in ["code", "github", "source"]:
             utils.log_command("code")
             utils.reply_to(message, "My code is on GitHub [here](https://github.com/SOBotics/SoundFlow).")
