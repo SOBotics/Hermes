@@ -126,7 +126,7 @@ def on_message(message, client):
                 else:
                     utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
         if words[0].startswith("@Team/"):
-            if utils.is_privileged(message):
+            if utils.is_privileged(message, True):
                 utils.log_command("team ping")
                 ping_message = ping_team.ping_team(words[0].replace("@Team/", ""), full_command, client)
                 if ping_message is not None:
@@ -137,7 +137,7 @@ def on_message(message, client):
         if command in ["amiprivileged"]:
             utils.log_command("amiprivileged")
 
-            if utils.is_privileged(message):
+            if utils.is_privileged(message, True):
                 utils.reply_to(message, "You are privileged.")
             else:
                 utils.reply_to(message, "You are not privileged. Ping @Team/SoundFlowDevs if you believe that's an error.")

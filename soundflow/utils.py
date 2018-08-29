@@ -39,14 +39,14 @@ class utils:
         """
         Check if the specified alias is valid
         """
-        if re.match(r"@Sou?[n]?[d]?[F]?[l]?[o]?[w]?", alias) or alias.startswith("@Team/"):
+        if re.match(r"@[Ss]ou[n]?[d]?[Ff]?[l]?[o]?[w]?", alias) or alias.startswith("@Team/"):
             #Alias valid
             return True
         else:
             #Alias invalid
             return False
 
-    def is_privileged(self, message):
+    def is_privileged(self, message, include_regulars = False):
         """
         Check if a user is allowed to use privileged commands (usally restricted to bot owners, room owners and moderators)
         """
@@ -54,11 +54,12 @@ class utils:
         for owner in self.room_owners:
             priviledged_users.append(owner.id)
 
-        for user in regulars.regulars:
-            priviledged_users.append(user)
+        if include_regulars:
+            for user in regulars.regulars:
+                priviledged_users.append(user)
 
         # Restrict function to (site) moderators, room owners and maintainers
-        if  message.user.is_moderator or message.user.id in priviledged_users:
+        if message.user.is_moderator or message.user.id in priviledged_users:
             return True
         else:
             return False
