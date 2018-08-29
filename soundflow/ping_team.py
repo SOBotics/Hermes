@@ -20,14 +20,10 @@ def _find_team(team_name):
 def _get_pings(team, client):
     ping_list = ""
 
-    for user_id in team.members:
+    for username in team.members:
         if ping_list == "":
-            ping_list = f"@{_get_pingeable_name(user_id, client)}"
+            ping_list = f"@{username}"
             continue
-        ping_list = f"{ping_list}, @{_get_pingeable_name(user_id, client)}"
+        ping_list = f"{ping_list}, @{username}"
 
     return ping_list
-
-
-def _get_pingeable_name(user_id, client):
-    return client.get_user(user_id).name.replace(" ", "")

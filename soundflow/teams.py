@@ -9,7 +9,7 @@ teams = [
             "SoundFlowDevs"
         ],
         "members": [
-            4733879 #Filnor
+            "Filnor"
         ]
     },
     {
@@ -18,7 +18,7 @@ teams = [
             "CheckYerFlagsDevs"
         ],
         "members": [
-            4733879 #Filnor
+            "Filnor"
         ]
     },
     {
@@ -27,7 +27,7 @@ teams = [
             "ThunderDevs"
         ],
         "members": [
-            4688119 #Ashish Ahuja
+            "Ashish Ahuja"
         ]
     },
     {
@@ -36,8 +36,8 @@ teams = [
             "FireAlarmDevs"
         ],
         "members": [
-            4688119, #Ashish Ahuja
-            3476191, #NobodyNada
+            "AshishAhuja",
+            "NobodyNada"
         ]
     },
     {
@@ -47,26 +47,26 @@ teams = [
             "ROs"
         ],
         "members": [
-            5292302, #Petter Friberg
-            4687348, #FelixSFD
-            6375113, #Bugs
-            4099593, #Bhargav Rao
-            559745,  #Floern
-            563532,  #Rob
-            4688119, #Ashish Ahuja
-            3476191, #NobodyNada
-            2246344, #Sam
-            578411,  #rene
-            3002139, #Baum mit Augen
-            5148907, #Cold Fire
-            4050842, #Thaillie
-            4174897, #Paul Stenne
-            3160466, #ArtOfCode
-            2415822, #JAL
-            4341440, #Axeman
-            4137985, #Cath
-            1816093, #Drew
-            1743880, #Tunaki
+            "PetterFriberg",
+            "FelixSFD",
+            "Bugs",
+            "BhargavRao",
+            "Floern",
+            "Rob",
+            "AshishAhuja",
+            "NobodyNada",
+            "Sam",
+            "rene",
+            "BaummitAugen",
+            "ColdFire",
+            "Thaillie",
+            "PaulStenne",
+            "ArtOfCode",
+            "JAL",
+            "Axeman",
+            "Cath",
+            "Drew",
+            "Tunaki"
         ]
     },
     {
@@ -74,10 +74,10 @@ teams = [
             "Admins"
         ],
         "members": [
-            5292302, #Petter Friberg
-            4687348, #FelixSFD
-            4099593, #Bhargav Rao
-            2246344, #Sam
+            "PetterFriberg",
+            "FelixSFD",
+            "BhargavRao",
+            "Sam"
         ]
     }
 ]

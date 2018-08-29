@@ -55,7 +55,7 @@ class utils:
             priviledged_users.append(owner.id)
 
         for user in regulars.regulars:
-            priviledged_users.append(regulars)
+            priviledged_users.append(user)
 
         # Restrict function to (site) moderators, room owners and maintainers
         if  message.user.is_moderator or message.user.id in priviledged_users:
@@ -85,18 +85,6 @@ class utils:
         """
         if isinstance(message, MessagePosted) or isinstance(message, MessageEdited):
             main_logger.info(f"Message #{message._message_id} was posted by '{message.user.name}' in room '{message.room.name}'")
-
-    @staticmethod
-    def checkable_user_ids(user_list):
-        """
-        Exclude moderators and bots from the checkable user list (Except Natty and Smokey) to reduce the amount of requests
-        """
-        checkable_users = []
-        bot_id_list = [6373379, 9220325, 7240793, 7481043, 8149646, 6294609, 7829893, 7418352, 5675570, 3671802, 5519396, 5675570, 8292957, 5269493]
-        for u in user_list:
-            if u.id not in bot_id_list and not u.is_moderator:
-                checkable_users.append(u)
-        return checkable_users
 
 class Struct:
     def __init__(self, **entries):
