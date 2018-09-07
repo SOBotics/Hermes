@@ -58,9 +58,9 @@ def main():
         redunda_thread.start()
 
         if debug_mode:
-            room.send_message(f"[ [SoundFlow](https://github.com/SOBotics/SoundFlow) ] {utils.config['botVersion']} started in debug mode on {utils.config['botParent']}/{utils.config['botMachine']}.")
+            room.send_message(f"[ [Hermes](https://github.com/SOBotics/SoundFlow) ] {utils.config['botVersion']} started in debug mode on {utils.config['botParent']}/{utils.config['botMachine']}.")
         else:
-            room.send_message(f"[ [SoundFlow](https://github.com/SOBotics/SoundFlow) ] {utils.config['botVersion']} started on {utils.config['botParent']}/{utils.config['botMachine']}.")
+            room.send_message(f"[ [Hermes](https://github.com/SOBotics/SoundFlow) ] {utils.config['botVersion']} started on {utils.config['botParent']}/{utils.config['botMachine']}.")
 
 
         while True:

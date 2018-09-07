@@ -39,7 +39,7 @@ class utils:
         """
         Check if the specified alias is valid
         """
-        if re.match(r"@[Ss]ou[n]?[d]?[Ff]?[l]?[o]?[w]?", alias) or alias.startswith("@Team/"):
+        if re.match(r"@[Hh]er[m]?[e]?[s]?", alias) or alias.startswith("@Team/"):
             #Alias valid
             return True
         else:
