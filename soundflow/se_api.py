@@ -26,3 +26,16 @@ class se_api:
         except urllib.error.HTTPError as e:
             main_logger.error(f"Error calling the SE API: Got repsonse code {e.code} and message {e.reason}.")
             return None
+
+    def get_user_pingable_name(self, user_id, keep_spaces=False):
+        """
+        Get an user object for the specified user id from the API
+        """
+        username = self.get_user(user_id)["items"][0]["display_name"]
+
+        if username is not None and not keep_spaces:
+            return username.replace(" ", "")
+        elif username is not None and keep_spaces:
+            return username
+        else:
+            return None

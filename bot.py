@@ -23,14 +23,13 @@ def main():
     """
     Main thread of the bot
     """
-    debug_mode = False
 
     #Get config for the mode (debug/prod)
     try:
         if sys.argv[1] == "--debug":
             print("Loading debug config...")
             utils.config = config.debug_config
-            debug_mode = True
+            utils.debug_mode = True
         else:
             raise IndexError
     except IndexError:
@@ -40,13 +39,12 @@ def main():
     try:
         #Login and connection to chat
         print("Logging in and joining chat room...")
-        utils.room_number = utils.config["room"]
         client = Client(utils.config["chatHost"])
         client.login(utils.config["email"], utils.config["password"])
-        utils.client = client
         room = client.get_room(utils.config["room"])
         room.join()
         room.watch_socket(on_message)
+        utils.room = room
         print(room.get_current_user_names())
         utils.room_owners = room.owners
 
@@ -57,10 +55,10 @@ def main():
         redunda_thread = redunda.RedundaThread(stop_redunda, utils.config, main_logger)
         redunda_thread.start()
 
-        if debug_mode:
-            room.send_message(f"[ [Hermes](https://github.com/SOBotics/SoundFlow) ] {utils.config['botVersion']} started in debug mode on {utils.config['botParent']}/{utils.config['botMachine']}.")
+        if utils.debug_mode:
+            room.send_message(f"[ [Hermes](https://git.io/fNmlf) ] {utils.config['botVersion']} started in debug mode on {utils.config['botParent']}/{utils.config['botMachine']}.")
         else:
-            room.send_message(f"[ [Hermes](https://github.com/SOBotics/SoundFlow) ] {utils.config['botVersion']} started on {utils.config['botParent']}/{utils.config['botMachine']}.")
+            room.send_message(f"[ [Hermes](https://git.io/fNmlf) ] {utils.config['botVersion']} started on {utils.config['botParent']}/{utils.config['botMachine']}.")
 
 
         while True:
@@ -108,7 +106,10 @@ def on_message(message, client):
         return
 
     #Check if command is not set
-    if len(words) <= 1:
+    if len(words) <= 1 and message_val.startswith("@Team/"):
+        utils.reply_to(message, "You may want to pass a message.")
+        return
+    elif len(words) <= 1:
         utils.reply_to(message, "You may want to pass a command.")
         return
 
@@ -128,9 +129,19 @@ def on_message(message, client):
         if words[0].startswith("@Team/"):
             if utils.is_privileged(message, True):
                 utils.log_command("team ping")
-                ping_message = ping_team.ping_team(words[0].replace("@Team/", ""), full_command, client)
-                if ping_message is not None:
-                    utils.post_message(ping_message)
+
+                if full_command is "@Team/":
+                    utils.reply_to(message, "Please specify a team.")
+                    return
+
+                team_name = words[0].replace("@Team/", "")
+
+                if words[1] in ["--members", "--whois"]:
+                    ping_team.get_members(team_name, utils)
+                elif words[1] in ["--here", "--online"]:
+                    ping_team.get_online_members(team_name, utils)
+                else:
+                    ping_team.ping_team(team_name, full_command, utils)
             else:
                 utils.reply_to(message, "Sorry, but only moderators, room owners and approved regulars are allowed to use this command")
 
@@ -140,7 +151,7 @@ def on_message(message, client):
             if utils.is_privileged(message, True):
                 utils.reply_to(message, "You are privileged.")
             else:
-                utils.reply_to(message, "You are not privileged. Ping @Team/SoundFlowDevs if you believe that's an error.")
+                utils.reply_to(message, "You are not privileged. Ping @Team/HermesDevs if you believe that's an error.")
         elif command in ["a", "alive"]:
             utils.log_command("alive")
             utils.reply_to(message, "All circuits operational.")
@@ -156,12 +167,24 @@ def on_message(message, client):
 
             if utils.is_privileged(message):
                 try:
-                    utils.client.get_room(utils.room_number).leave()
+                    utils.room.leave()
                 except BaseException:
                     pass
                 raise os._exit(0)
             else:
                 utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
+        elif command in ["update"]:
+            utils.log_command("update")
+
+            # Restrict function to maintainers
+            if message.user.id == 4733879:
+                utils.post_message("Pulling from GitHub...")
+                os.system("git config core.fileMode false")
+                os.system("git reset --hard origin/master")
+                os.system("git pull")
+                raise os._exit(1)
+            else:
+                utils.reply_to(message, "This command is restricted to bot maintainers.")
         elif command in ["reboot"]:
             utils.log_command("reboot")
             main_logger.warning(f"Restart requested by {message.user.name}")
@@ -169,7 +192,7 @@ def on_message(message, client):
             if utils.is_privileged(message):
                 try:
                     utils.post_message("Rebooting now...")
-                    utils.client.get_room(utils.room_number).leave()
+                    utils.room.leave()
                 except BaseException:
                     pass
                 raise os._exit(1)
@@ -178,27 +201,32 @@ def on_message(message, client):
         elif command in ["commands", "help"]:
             utils.log_command("command list")
             utils.post_message("    ### SoundFlow commands ###\n" + \
-                               "    amiprivileged                - Checks if you're allowed to run privileged commands\n" + \
-                               "    alive, a                     - Replies with a message if the bot is running.\n" + \
-                               "    version, v                   - Returns current version\n" + \
-                               "    location, loc                - Returns the location of the bot\n" + \
-                               "    delete, del, poof            - Deletes a message. Requires privileges.\n" + \
-                               "    reboot                       - Reboots a running instance. Requires privileges.\n" + \
-                               "    kill, stop                   - Terminates the bot instance. Requires privileges.\n" + \
-                               "    listteams, list teams        - Lists the pingeable teams\n" + \
-                               "    commands, help               - This command. Lists all available commands.\n", False, False)
+                               "    amiprivileged                 - Checks if you're allowed to run privileged commands\n" + \
+                               "    a[live]                       - Replies with a message if the bot is running.\n" + \
+                               "    v[ersion]                     - Returns current version\n" + \
+                               "    loc[ation]                    - Returns the location of the bot\n" + \
+                               "    del[ete], poof                - Deletes a message. Requires privileges.\n" + \
+                               "    update                        - Pulls the latest commit from git. Requires maintainer privileges.\n" + \
+                               "    reboot                        - Reboots a running instance. Requires privileges.\n" + \
+                               "    kill, stop                    - Terminates the bot instance. Requires privileges.\n" + \
+                               "    listteams, list teams         - Lists the pingeable teams\n" + \
+                               "    @Team/<team name>             - Ping the members of the specified team. Please note that pinging the team can take some time, depending on it's size.\n" + \
+                               "    @Team/<team name> --members   - List the members of a team\n" + \
+                               "    @Team/<team name> --whois     - List the members of a team\n" + \
+                               "    @Team/<team name> --here      - List the members of a team that are currently in the room\n" + \
+                               "    @Team/<team name> --online    - List the members of a team that are currently in the room\n", False, False)
         elif full_command in ["listteams", "list teams"]:
             utils.log_command("team list")
             utils.post_message("    I currently know of the following teams:\n" + \
-                               "    SoundFlowDevs     - The developers of SoundFlow\n" + \
-                               "    CheckYerFlagsDevs - The developers of CheckYerFlags\n" + \
-                               "    ThunderDevs       - The developers of Thunder\n" + \
-                               "    FireAlarmDevs     - The developers of FireAlarm\n" + \
-                               "    RoomOwners        - The room owners of SOBotics\n" + \
-                               "    Admins            - The admins of SOBotics, which have admin rights on GitHub etc.\n", False, False)
+                               "    HermesDevs                 - The developers of Hermes, CheckYerFlags and RankOverflow\n" + \
+                               "    HeatDetectorDevs, HDDevs   - The developers of Heat Detector\n" + \
+                               "    ThunderDevs                - The developers of Thunder\n" + \
+                               "    FireAlarmDevs              - The developers of FireAlarm\n" + \
+                               "    RoomOwners                 - The room owners of SOBotics\n" + \
+                               "    Admins                     - The admins of SOBotics, which have admin rights on GitHub etc.\n", False, False)
         elif full_command.lower() in ["code", "github", "source"]:
             utils.log_command("code")
-            utils.reply_to(message, "My code is on GitHub [here](https://github.com/SOBotics/SoundFlow).")
+            utils.reply_to(message, "My code is on GitHub [here](https://git.io/fNmlf).")
     except BaseException as e:
         main_logger.error(f"CRITICAL ERROR: {e}")
         if message is not None and message.id is not None:

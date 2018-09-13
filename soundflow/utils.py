@@ -9,12 +9,9 @@ from soundflow import regulars
 
 
 class utils:
-    def __init__(self, room_number = None, client = None, quota = None, config = None, room_owners = None):
-        if room_number is not None:
-            self.room_number = room_number
-
-        if client is not None:
-            self.client = client
+    def __init__(self, room = None, quota = None, config = None, room_owners = None, debug_mode = False):
+        if room is not None:
+            self.room = room
 
         if quota is not None:
             self.quota = quota
@@ -27,13 +24,16 @@ class utils:
         if room_owners is not None:
             self.room_owners = room_owners
 
+        if debug_mode is not None:
+            self.debug_mode: debug_mode
+
     def post_message(self, message, no_main_logger = False, length_check = True):
         """
         Post a chat message
         """
         if not no_main_logger:
             utils.log_message(message)
-        self.client.get_room(self.room_number).send_message(message, length_check)
+        self.room.send_message(message, length_check)
 
     def alias_valid(self, alias):
         """
@@ -90,3 +90,9 @@ class utils:
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
+
+class NoMembersOnlineError(Exception):
+    pass
+
+class TeamNotFoundError(Exception):
+    pass
