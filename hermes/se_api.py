@@ -6,7 +6,7 @@ import io
 import json
 import urllib.error
 from urllib.request import urlopen
-from soundflow.logger import main_logger
+from hermes.logger import main_logger
 
 
 class se_api:

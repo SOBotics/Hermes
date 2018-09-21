@@ -4,8 +4,8 @@ Helper class for regularly used functions
 import re
 
 from chatoverflow.chatexchange.events import MessagePosted, MessageEdited
-from soundflow.logger import main_logger
-from soundflow import regulars
+from hermes.logger import main_logger
+from hermes import regulars
 
 
 class utils:

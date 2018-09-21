@@ -2,14 +2,13 @@ import os
 import sys
 import threading
 import traceback
-
-from soundflow.logger import main_logger
-from soundflow.utils import utils
+from hermes.logger import main_logger
+from hermes.utils import utils
 from chatoverflow.chatexchange.client import Client
 from chatoverflow.chatexchange.events import MessagePosted, MessageEdited
-
-import soundflow.redunda as redunda
-import soundflow.ping_team as ping_team
+from markdownify import markdownify as md
+import hermes.redunda as redunda
+import hermes.ping_team as ping_team
 
 #Import config file with custom error message
 try:
@@ -35,6 +34,7 @@ def main():
     except IndexError:
         print("Loading productive config... \nIf you wanted to load the debug config, use the '--debug' command line option")
         utils.config = config.prod_config
+        utils.debug_mode = False
 
     try:
         #Login and connection to chat
@@ -141,7 +141,7 @@ def on_message(message, client):
                 elif words[1] in ["--here", "--online"]:
                     ping_team.get_online_members(team_name, utils)
                 else:
-                    ping_team.ping_team(team_name, full_command, utils)
+                    ping_team.ping_team(team_name, md(full_command), utils)
             else:
                 utils.reply_to(message, "Sorry, but only moderators, room owners and approved regulars are allowed to use this command")
 

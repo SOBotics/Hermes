@@ -11,7 +11,7 @@ teams = [
             "RankOverFlowDevs"
         ],
         "members": [
-            4733879, #Filnor
+            4733879,  #Filnor
         ]
     },
     {
@@ -42,6 +42,16 @@ teams = [
         "members": [
             5292302, #Petter Friberg
             6707985, #geisterfurz007
+        ]
+    },
+    {
+        "aliases": [
+            "GenericBot",
+            "GenericBotDevs",
+            "GenBotDevs",
+        ],
+        "members": [
+            559745,  #Floern
         ]
     },
     {

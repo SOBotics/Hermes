@@ -1,13 +1,13 @@
-import soundflow.teams as team_list
-import soundflow.se_api as stack_api
-from soundflow.utils import Struct
-from soundflow.utils import TeamNotFoundError, NoMembersOnlineError
+import hermes.teams as team_list
+import hermes.se_api as stack_api
+from hermes.utils import Struct
+from hermes.utils import TeamNotFoundError, NoMembersOnlineError
 
 
 def ping_team(team_name, message, utils):
     members = None
     try:
-        members = _find_team(team_name, utils)
+        members = _find_team(team_name, utils, True)
     except TeamNotFoundError:
         utils.post_message(f"Unkown team name **{team_name}**")
     except NoMembersOnlineError:
@@ -53,7 +53,7 @@ def get_online_members(team_name, utils):
         member_list = f"{member_list}, {se_api.get_user_pingable_name(member[0], True)}"
     utils.post_message(member_list)
 
-def _find_team(team_name, utils):
+def _find_team(team_name, utils, is_ping=False):
     selected_team = None
 
     #Search the team list for the given alias and return the team if found
@@ -69,7 +69,8 @@ def _find_team(team_name, utils):
     #Check which users are currently in the room and sort them by their last seen timestamp
     members_online = []
 
-    for u in utils.room.get_pingable_users():
+    #for u in utils.room.get_pingable_users():
+    for u in utils.room.get_current_users():
         if u.id in selected_team.members:
             members_online.append((u.id, u.last_seen))
 
@@ -77,6 +78,9 @@ def _find_team(team_name, utils):
 
     if len(members_online) == 0:
         raise NoMembersOnlineError
+    elif len(members_online) >= 1 and team_name in ["RoomOwners", "RO", "ROs"] and is_ping:
+        #Special case for Room Owner team: Only ping most recent user
+        return [members_online[0]]
     else:
         return members_online
 
