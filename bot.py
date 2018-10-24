@@ -2,13 +2,18 @@ import os
 import sys
 import threading
 import traceback
+
+import git
+
+import chatoverflow
 from hermes.logger import main_logger
-from hermes.utils import utils
+from hermes.utils import utils, Struct
 from chatoverflow.chatexchange.client import Client
 from chatoverflow.chatexchange.events import MessagePosted, MessageEdited
 from markdownify import markdownify as md
 import hermes.redunda as redunda
 import hermes.ping_team as ping_team
+import hermes.se_api as stackexchange_api
 
 #Import config file with custom error message
 try:
@@ -23,42 +28,55 @@ def main():
     Main thread of the bot
     """
 
+    debug_mode = False
+
     #Get config for the mode (debug/prod)
     try:
         if sys.argv[1] == "--debug":
-            print("Loading debug config...")
-            utils.config = config.debug_config
-            utils.debug_mode = True
+            print("Using debug config.")
+            utils.config = Struct(**config.debug_config)
+            debug_mode = True
         else:
             raise IndexError
     except IndexError:
-        print("Loading productive config... \nIf you wanted to load the debug config, use the '--debug' command line option")
-        utils.config = config.prod_config
-        utils.debug_mode = False
+        print("Using productive config. \nIf you intended to use the debug config, use the '--debug' command line option")
+        utils.config = Struct(**config.prod_config)
+
+    #Set version
+    utils.config.botVersion = "v1.0.0"
+
+    #Initialize SE API class instance
+    utils.se_api = stackexchange_api.se_api(utils.config.stackExchangeApiKey)
 
     try:
         #Login and connection to chat
         print("Logging in and joining chat room...")
-        client = Client(utils.config["chatHost"])
-        client.login(utils.config["email"], utils.config["password"])
-        room = client.get_room(utils.config["room"])
-        room.join()
+        utils.room_number = utils.config.room
+        client = Client(utils.config.chatHost)
+        client.login(utils.config.email, utils.config.password)
+        utils.client = client
+        room = client.get_room(utils.config.room)
+        try:
+            room.join()
+        except ValueError as e:
+            if str(e).startswith("invalid literal for int() with base 10: 'login?returnurl=http%3a%2f%2fchat.stackoverflow.com%2fchats%2fjoin%2ffavorite"):
+                raise chatoverflow.chatexchange.browser.LoginError("Too many recent logins. Please wait a bit and try again.")
+
         room.watch_socket(on_message)
-        utils.room = room
         print(room.get_current_user_names())
         utils.room_owners = room.owners
 
-        main_logger.info(f"Joined room '{room.name}' on {utils.config['chatHost']}")
+        main_logger.info(f"Joined room '{room.name}' on {utils.config.chatHost}")
 
         #Redunda pining
         stop_redunda = threading.Event()
         redunda_thread = redunda.RedundaThread(stop_redunda, utils.config, main_logger)
         redunda_thread.start()
 
-        if utils.debug_mode:
-            room.send_message(f"[ [Hermes](https://git.io/fNmlf) ] {utils.config['botVersion']} started in debug mode on {utils.config['botParent']}/{utils.config['botMachine']}.")
+        if debug_mode:
+            room.send_message(f"[ [Hermes](https://git.io/fNmlf) ] {utils.config.botVersion} started in debug mode on {utils.config.botOwner}/{utils.config.botMachine}.")
         else:
-            room.send_message(f"[ [Hermes](https://git.io/fNmlf) ] {utils.config['botVersion']} started on {utils.config['botParent']}/{utils.config['botMachine']}.")
+            room.send_message(f"[ [Hermes](https://git.io/fNmlf) ] {utils.config.botVersion} started on {utils.config.botOwner}/{utils.config.botMachine}.")
 
 
         while True:
@@ -116,6 +134,7 @@ def on_message(message, client):
     #Store command in it's own variable
     command = words[1]
     full_command = ' '.join(words[1:])
+    utils.log_command(full_command)
 
     #Here are the commands defined
     try:
@@ -126,80 +145,61 @@ def on_message(message, client):
                     msg.delete()
                 else:
                     utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
-        if words[0].startswith("@Team/"):
-            if utils.is_privileged(message, True):
-                utils.log_command("team ping")
 
-                if full_command is "@Team/":
-                    utils.reply_to(message, "Please specify a team.")
-                    return
+        if words[0].lower().startswith("@team/"):
+            full_command = full_command.replace("@team/", "@Team/")
 
-                team_name = words[0].replace("@Team/", "")
+            if full_command.lower() is "@Team/":
+                utils.reply_to(message, "Please specify a team.")
+                return
 
-                if words[1] in ["--members", "--whois"]:
-                    ping_team.get_members(team_name, utils)
-                elif words[1] in ["--here", "--online"]:
-                    ping_team.get_online_members(team_name, utils)
-                else:
-                    ping_team.ping_team(team_name, md(full_command), utils)
+            team_name = words[0].replace("@Team/", "")
+
+            if words[1] in ["--members"]:
+                ping_team.get_members(team_name, utils)
+            elif words[1] in ["--here"]:
+                ping_team.get_online_members(team_name, utils)
             else:
-                utils.reply_to(message, "Sorry, but only moderators, room owners and approved regulars are allowed to use this command")
+                if utils.is_privileged(message, include_regulars=True) or team_name in ["RoomOwners", "RO", "ROs"]:
+                    ping_team.ping_team(team_name, md(full_command), utils)
+                else:
+                    utils.reply_to(message, "Sorry, but only moderators, room owners and approved regulars are allowed to use this command (The Room Owner team is an exception)")
 
         if command in ["amiprivileged"]:
-            utils.log_command("amiprivileged")
-
-            if utils.is_privileged(message, True):
+            if utils.is_privileged(message, include_regulars=True):
                 utils.reply_to(message, "You are privileged.")
             else:
                 utils.reply_to(message, "You are not privileged. Ping @Team/HermesDevs if you believe that's an error.")
         elif command in ["a", "alive"]:
-            utils.log_command("alive")
             utils.reply_to(message, "All circuits operational.")
         elif command in ["v", "version"]:
-            utils.log_command("version")
             utils.reply_to(message, f"Current version is {utils.config['botVersion']}")
         elif command in ["loc", "location"]:
-            utils.log_command("location")
             utils.reply_to(message, f"This instance is running on {utils.config['botParent']}/{utils.config['botMachine']}")
         elif command in ["kill", "stop"]:
-            utils.log_command("kill")
             main_logger.warning(f"Termination or stop requested by {message.user.name}")
 
             if utils.is_privileged(message):
                 try:
-                    utils.room.leave()
+                    utils.get_current_room().leave()
                 except BaseException:
                     pass
                 raise os._exit(0)
             else:
                 utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
-        elif command in ["update"]:
-            utils.log_command("update")
-
-            # Restrict function to maintainers
-            if message.user.id == 4733879:
-                utils.post_message("Pulling from GitHub...")
-                os.system("git config core.fileMode false")
-                os.system("git reset --hard origin/master")
-                os.system("git pull")
-                raise os._exit(1)
-            else:
-                utils.reply_to(message, "This command is restricted to bot maintainers.")
         elif command in ["reboot"]:
-            utils.log_command("reboot")
             main_logger.warning(f"Restart requested by {message.user.name}")
 
             if utils.is_privileged(message):
                 try:
                     utils.post_message("Rebooting now...")
-                    utils.room.leave()
+                    utils.get_current_room().leave()
                 except BaseException:
                     pass
                 raise os._exit(1)
             else:
                 utils.reply_to(message, "This command is restricted to moderators, room owners and maintainers.")
         elif command in ["commands", "help"]:
-            utils.log_command("command list")
             utils.post_message("    ### SoundFlow commands ###\n" + \
                                "    amiprivileged                 - Checks if you're allowed to run privileged commands\n" + \
                                "    a[live]                       - Replies with a message if the bot is running.\n" + \
@@ -209,24 +209,44 @@ def on_message(message, client):
                                "    update                        - Pulls the latest commit from git. Requires maintainer privileges.\n" + \
                                "    reboot                        - Reboots a running instance. Requires privileges.\n" + \
                                "    kill, stop                    - Terminates the bot instance. Requires privileges.\n" + \
-                               "    listteams, list teams         - Lists the pingeable teams\n" + \
-                               "    @Team/<team name>             - Ping the members of the specified team. Please note that pinging the team can take some time, depending on it's size.\n" + \
+                               "    listteams, teams              - Lists the pingeable teams\n" + \
+                               "    @Team/<team name> <message>   - Ping the members of the specified team. Please note that pinging the team can take some time, depending on it's size. \n" + \
                                "    @Team/<team name> --members   - List the members of a team\n" + \
-                               "    @Team/<team name> --whois     - List the members of a team\n" + \
-                               "    @Team/<team name> --here      - List the members of a team that are currently in the room\n" + \
-                               "    @Team/<team name> --online    - List the members of a team that are currently in the room\n", False, False)
-        elif full_command in ["listteams", "list teams"]:
-            utils.log_command("team list")
+                               "    @Team/<team name> --here      - List the members of a team that are currently in the room\n", log_message=False, length_check=False)
+        elif full_command in ["listteams", "teams"]:
             utils.post_message("    I currently know of the following teams:\n" + \
                                "    HermesDevs                 - The developers of Hermes, CheckYerFlags and RankOverflow\n" + \
                                "    HeatDetectorDevs, HDDevs   - The developers of Heat Detector\n" + \
                                "    ThunderDevs                - The developers of Thunder\n" + \
                                "    FireAlarmDevs              - The developers of FireAlarm\n" + \
-                               "    RoomOwners                 - The room owners of SOBotics\n" + \
-                               "    Admins                     - The admins of SOBotics, which have admin rights on GitHub etc.\n", False, False)
+                               "    RoomOwners                 - The room owners of SOBotics. This will always ping only one Room Owner\n" + \
+                               "    Admins                     - The admins of SOBotics, which have admin rights on GitHub etc.\n", log_message=False, length_check=False)
         elif full_command.lower() in ["code", "github", "source"]:
-            utils.log_command("code")
             utils.reply_to(message, "My code is on GitHub [here](https://git.io/fNmlf).")
+        elif command in ["uptime"]:
+            message.reply_to(f"Running since {utils.get_uptime()}")
+        elif command in ["system"]:
+            utils.post_message(f"    uptime         {utils.get_uptime()}\n" + \
+                               f"    location       {utils.config.botOwner}/{utils.config.botMachine}\n" + \
+                               f"    api quota      {utils.se_api.check_quota()}", log_message=False, length_check=False)
+        elif command in ["quota"]:
+            utils.post_message(f"The remaining API quota is {utils.se_api.check_quota()}.")
+        elif command in ["update"]:
+            if utils.is_privileged(message, owners_only=True):
+                try:
+                    repo = git.Repo(".")
+                    repo.git.reset("--hard","origin/master")
+                    g = git.cmd.Git(".")
+                    g.pull()
+                    main_logger.info("Update completed, restarting now.")
+                    os._exit(1)
+                except BaseException as e:
+                    main_logger.error(f"Error while updating: {e}")
+                    pass
+                os._exit(1)
+            else:
+                message.reply_to("This command is restricted to bot owners.")
+
     except BaseException as e:
         main_logger.error(f"CRITICAL ERROR: {e}")
         if message is not None and message.id is not None:

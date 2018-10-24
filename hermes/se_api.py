@@ -7,6 +7,7 @@ import json
 import urllib.error
 from urllib.request import urlopen
 from hermes.logger import main_logger
+from hermes.utils import Struct
 
 
 class se_api:
@@ -38,4 +39,20 @@ class se_api:
         elif username is not None and keep_spaces:
             return username
         else:
+            return None
+
+    def check_quota(self):
+        """
+        Get the current quota
+        :return:
+        """
+        try:
+            response = urlopen(f"https://api.stackexchange.com/2.2/info?site=stackoverflow&key={self.api_key}").read()
+            buffer = io.BytesIO(response)
+            gzipped_file = gzip.GzipFile(fileobj=buffer)
+            content = gzipped_file.read()
+            data = Struct(**json.loads(content.decode("utf-8")))
+            return data.quota_remaining
+        except urllib.error.HTTPError as e:
+            main_logger.error(f"Error calling the SE API: Got repsonse code {e.code} and message {e.reason}.")
             return None

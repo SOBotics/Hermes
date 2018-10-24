@@ -1,5 +1,4 @@
 import hermes.teams as team_list
-import hermes.se_api as stack_api
 from hermes.utils import Struct
 from hermes.utils import TeamNotFoundError, NoMembersOnlineError
 
@@ -18,8 +17,6 @@ def ping_team(team_name, message, utils):
         utils.post_message(message)
 
 def get_members(team_name, utils):
-    se_api = stack_api.se_api(utils.config["stackExchangeApiKey"])
-
     for team_raw in team_list.teams:
         team = Struct(**team_raw)
         for alias in team.aliases:
@@ -27,15 +24,14 @@ def get_members(team_name, utils):
                 member_list = ""
                 for member in team.members:
                     if member_list == "":
-                        member_list = f"The team **{team_name}** has the following members: {se_api.get_user_pingable_name(member, True)}"
+                        member_list = f"The team **{team_name}** has the following members: {utils.se_api.get_user_pingable_name(member, True)}"
                         continue
-                    member_list = f"{member_list}, {se_api.get_user_pingable_name(member, True)}"
+                    member_list = f"{member_list}, {utils.se_api.get_user_pingable_name(member, True)}"
                 utils.post_message(member_list)
 
 
 
 def get_online_members(team_name, utils):
-    se_api = stack_api.se_api(utils.config["stackExchangeApiKey"])
     members = []
 
     try:
@@ -48,9 +44,9 @@ def get_online_members(team_name, utils):
     member_list = ""
     for member in members:
         if member_list == "":
-            member_list = f"The following members of the **{team_name}** team are currently in the room: {se_api.get_user_pingable_name(member[0], True)}"
+            member_list = f"The following members of the **{team_name}** team are currently in the room: {utils.se_api.get_user_pingable_name(member[0], True)}"
             continue
-        member_list = f"{member_list}, {se_api.get_user_pingable_name(member[0], True)}"
+        member_list = f"{member_list}, {utils.se_api.get_user_pingable_name(member[0], True)}"
     utils.post_message(member_list)
 
 def _find_team(team_name, utils, is_ping=False):
@@ -69,8 +65,7 @@ def _find_team(team_name, utils, is_ping=False):
     #Check which users are currently in the room and sort them by their last seen timestamp
     members_online = []
 
-    #for u in utils.room.get_pingable_users():
-    for u in utils.room.get_current_users():
+    for u in utils.get_current_room().get_current_users():
         if u.id in selected_team.members:
             members_online.append((u.id, u.last_seen))
 
@@ -87,16 +82,14 @@ def _find_team(team_name, utils, is_ping=False):
 
 
 def _get_pings(members, utils):
-    se_api = stack_api.se_api(utils.config["stackExchangeApiKey"])
     ping_list = ""
-    ping_handle = "@" if not utils.debug_mode else "%" # Use "%" as ping handle when debugging and "@" for production
 
     for member in members:
-        username = se_api.get_user_pingable_name(member[0])
+        username = utils.se_api.get_user_pingable_name(member[0])
         if ping_list == "":
-            ping_list = f"{ping_handle}{username}"
+            ping_list = f"@{username}"
             continue
-        ping_list = f"{ping_list}, {ping_handle}{username}"
+        ping_list = f"{ping_list}, @{username}"
 
     return ping_list
 
