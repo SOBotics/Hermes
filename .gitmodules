@@ -1,6 +1,0 @@
-[submodule "soundflow/chatoverflow"]
-	path = soundflow/chatoverflow
-	url = https://github.com/Filnor/ChatOverflow.git
-[submodule "chatoverflow"]
-	path = chatoverflow
-	url = https://github.com/Filnor/ChatOverflow.git

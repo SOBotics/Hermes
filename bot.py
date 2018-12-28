@@ -5,11 +5,11 @@ import traceback
 
 import git
 
-import chatoverflow
+import chatexchange
 from hermes.logger import main_logger
 from hermes.utils import utils, Struct
-from chatoverflow.chatexchange.client import Client
-from chatoverflow.chatexchange.events import MessagePosted, MessageEdited
+from chatexchange.client import Client
+from chatexchange.events import MessagePosted, MessageEdited
 from markdownify import markdownify as md
 import hermes.redunda as redunda
 import hermes.ping_team as ping_team
@@ -60,7 +60,7 @@ def main():
             room.join()
         except ValueError as e:
             if str(e).startswith("invalid literal for int() with base 10: 'login?returnurl=http%3a%2f%2fchat.stackoverflow.com%2fchats%2fjoin%2ffavorite"):
-                raise chatoverflow.chatexchange.browser.LoginError("Too many recent logins. Please wait a bit and try again.")
+                raise chatexchange.browser.LoginError("Too many recent logins. Please wait a bit and try again.")
 
         room.watch_socket(on_message)
         print(room.get_current_user_names())

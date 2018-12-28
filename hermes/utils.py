@@ -3,7 +3,7 @@ Helper class for regularly used functions
 """
 import re
 from datetime import datetime, timedelta
-from chatoverflow.chatexchange.events import MessagePosted, MessageEdited
+from chatexchange.events import MessagePosted, MessageEdited
 from hermes.logger import main_logger
 from hermes import regulars
 
